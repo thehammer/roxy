@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from infra.stacks.roxy_stack import RoxyStack
+from stacks.roxy_stack import RoxyStack
 
 app = cdk.App()
 

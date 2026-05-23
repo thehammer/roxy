@@ -1,0 +1,40 @@
+display_information:
+  name: roxy
+  description: Dynamic channel management + LLM agent for readwriteexecute
+  background_color: "#1a1a2e"
+
+features:
+  bot_user:
+    display_name: roxy
+    always_online: true
+  slash_commands:
+    - command: /spawn
+      description: Create a sub-channel under the current channel
+      usage_hint: "<channel-name>"
+      should_escape: false
+    - command: /prune
+      description: Archive stale sub-channels with no recent activity
+      should_escape: false
+
+oauth_config:
+  scopes:
+    bot:
+      - channels:history
+      - channels:manage
+      - channels:read
+      - chat:write
+      - commands
+      - groups:history
+      - groups:read
+      - groups:write
+
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.channels
+      - message.groups
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

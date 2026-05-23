@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+infra/cdk.out/
+infra/.cdk.staging/
+cdk.out/
+.cdk.staging/
