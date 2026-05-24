@@ -53,12 +53,16 @@ class ChannelRegistry:
         return ChannelRecord.from_item(item) if item else None
 
     def touch(self, channel_id: str) -> None:
-        """Update last_activity_at to now."""
-        self._table.update_item(
-            Key={"channel_id": channel_id},
-            UpdateExpression="SET last_activity_at = :ts",
-            ExpressionAttributeValues={":ts": int(time.time())},
-        )
+        """Update last_activity_at to now. No-ops if the channel isn't registered."""
+        try:
+            self._table.update_item(
+                Key={"channel_id": channel_id},
+                UpdateExpression="SET last_activity_at = :ts",
+                ExpressionAttributeValues={":ts": int(time.time())},
+                ConditionExpression="attribute_exists(channel_id)",
+            )
+        except self._table.meta.client.exceptions.ConditionalCheckFailedException:
+            pass
 
     def archive(self, channel_id: str) -> None:
         self._table.update_item(
