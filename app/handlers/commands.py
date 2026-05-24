@@ -44,7 +44,7 @@ def register(app, manager: ChannelManager) -> None:
         """
         ack()
         # TODO: restrict to workspace admins
-        archived = manager.prune_stale_channels(manager._registry._inactivity_days)
+        archived = manager.prune_stale_channels()
         if archived:
             names = ", ".join(f"`#{n}`" for n in archived)
             say(f"Archived {len(archived)} stale sub-channel(s): {names}")

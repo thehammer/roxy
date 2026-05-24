@@ -5,7 +5,6 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_ecr_assets as ecr_assets,
     aws_ecs as ecs,
-    aws_ecs_patterns as ecs_patterns,
     aws_iam as iam,
     aws_logs as logs,
     aws_secretsmanager as secretsmanager,
@@ -102,4 +101,6 @@ class RoxyStack(Stack):
             desired_count=1,
             service_name="roxy",
             assign_public_ip=True,  # needed for outbound unless using NAT gateway
+            min_healthy_percent=0,  # allows in-place replacement with a single task
+            circuit_breaker=ecs.DeploymentCircuitBreaker(rollback=True),
         )

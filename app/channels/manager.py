@@ -17,9 +17,10 @@ _NAME_RE = re.compile(r"^[a-z0-9][a-z0-9\-]{0,78}[a-z0-9]$|^[a-z0-9]$")
 
 
 class ChannelManager:
-    def __init__(self, registry: ChannelRegistry, slack_client):
+    def __init__(self, registry: ChannelRegistry, slack_client, inactivity_days: int):
         self._registry = registry
         self._client = slack_client
+        self._inactivity_days = inactivity_days
 
     def spawn_sub_channel(
         self,
@@ -78,12 +79,12 @@ class ChannelManager:
         log.info("spawned sub-channel", name=name, parent=parent_channel_name)
         return True, f"Created <#{channel['id']}>."
 
-    def prune_stale_channels(self, inactivity_days: int) -> list[str]:
+    def prune_stale_channels(self) -> list[str]:
         """
         Archive sub-channels with no activity for inactivity_days.
         Returns list of archived channel names.
         """
-        cutoff = int(time.time()) - int(timedelta(days=inactivity_days).total_seconds())
+        cutoff = int(time.time()) - int(timedelta(days=self._inactivity_days).total_seconds())
         stale = self._registry.list_stale_sub_channels(older_than_ts=cutoff)
         archived = []
 

@@ -1,3 +1,6 @@
+import threading
+import time
+
 import structlog
 from dotenv import load_dotenv
 from slack_bolt import App
@@ -12,6 +15,25 @@ load_dotenv()
 
 log = structlog.get_logger()
 
+_PRUNE_INTERVAL_SECONDS = 24 * 60 * 60  # daily
+
+
+def _start_prune_scheduler(manager: ChannelManager) -> None:
+    def loop():
+        while True:
+            time.sleep(_PRUNE_INTERVAL_SECONDS)
+            try:
+                archived = manager.prune_stale_channels()
+                if archived:
+                    log.info("auto-pruned stale sub-channels", count=len(archived), channels=archived)
+                else:
+                    log.debug("auto-prune ran, no stale channels found")
+            except Exception as e:
+                log.error("auto-prune failed", error=str(e))
+
+    t = threading.Thread(target=loop, daemon=True, name="prune-scheduler")
+    t.start()
+
 
 def build_app(config: Config) -> tuple[App, SocketModeHandler]:
     app = App(token=config.slack_bot_token)
@@ -20,10 +42,15 @@ def build_app(config: Config) -> tuple[App, SocketModeHandler]:
         table_name=config.dynamodb_table,
         region=config.aws_region,
     )
-    manager = ChannelManager(registry=registry, slack_client=app.client)
+    manager = ChannelManager(
+        registry=registry,
+        slack_client=app.client,
+        inactivity_days=config.inactivity_prune_days,
+    )
 
     events.register(app, registry)
     commands.register(app, manager)
+    _start_prune_scheduler(manager)
 
     handler = SocketModeHandler(app, config.slack_app_token)
     return app, handler
@@ -33,7 +60,12 @@ def main():
     structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(20))
     config = Config.from_env()
     _, handler = build_app(config)
-    log.info("roxy starting", table=config.dynamodb_table, region=config.aws_region)
+    log.info(
+        "roxy starting",
+        table=config.dynamodb_table,
+        region=config.aws_region,
+        prune_days=config.inactivity_prune_days,
+    )
     handler.start()
 
 
