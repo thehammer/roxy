@@ -1,11 +1,23 @@
+# Environment / secrets
 .env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
 .pytest_cache/
 .ruff_cache/
 dist/
 *.egg-info/
+.venv/
+
+# CDK
 infra/cdk.out/
 infra/.cdk.staging/
 cdk.out/
 .cdk.staging/
+
+# Local Claude Code session data
+.claude/
