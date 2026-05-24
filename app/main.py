@@ -10,6 +10,8 @@ from app.channels.manager import ChannelManager
 from app.channels.registry import ChannelRegistry
 from app.config import Config
 from app.handlers import commands, events
+from app.reactors.engine import ReactorEngine
+from app.reactors.registry import ReactorRegistry
 
 load_dotenv()
 
@@ -47,8 +49,13 @@ def build_app(config: Config) -> tuple[App, SocketModeHandler]:
         slack_client=app.client,
         inactivity_days=config.inactivity_prune_days,
     )
+    reactor_registry = ReactorRegistry(
+        table_name=config.reactors_table,
+        region=config.aws_region,
+    )
+    engine = ReactorEngine(registry=reactor_registry)
 
-    events.register(app, registry)
+    events.register(app, registry, engine)
     commands.register(app, manager)
     _start_prune_scheduler(manager)
 
@@ -63,6 +70,7 @@ def main():
     log.info(
         "roxy starting",
         table=config.dynamodb_table,
+        reactors_table=config.reactors_table,
         region=config.aws_region,
         prune_days=config.inactivity_prune_days,
     )

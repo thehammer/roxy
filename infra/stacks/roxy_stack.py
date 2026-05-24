@@ -28,6 +28,18 @@ class RoxyStack(Stack):
             removal_policy=RemovalPolicy.RETAIN,
         )
 
+        # --- DynamoDB: Reactors ---
+        reactors_table = dynamodb.Table(
+            self,
+            "ReactorsTable",
+            table_name="roxy-reactors",
+            partition_key=dynamodb.Attribute(
+                name="rule_id", type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+
         # --- Secrets (Slack tokens) ---
         slack_secret = secretsmanager.Secret(
             self,
@@ -46,6 +58,7 @@ class RoxyStack(Stack):
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         )
         table.grant_read_write_data(task_role)
+        reactors_table.grant_read_data(task_role)
         slack_secret.grant_read(task_role)
 
         task_def = ecs.FargateTaskDefinition(
@@ -79,6 +92,7 @@ class RoxyStack(Stack):
             environment={
                 "AWS_REGION": self.region,
                 "ROXY_DYNAMODB_TABLE": table.table_name,
+                "ROXY_REACTORS_TABLE": reactors_table.table_name,
                 "INACTIVITY_PRUNE_DAYS": "30",
                 "LOG_LEVEL": "INFO",
             },

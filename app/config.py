@@ -9,6 +9,7 @@ class Config:
 
     aws_region: str
     dynamodb_table: str
+    reactors_table: str
 
     # How long a sub-channel can be idle before pruning eligibility (days)
     inactivity_prune_days: int
@@ -22,6 +23,7 @@ class Config:
             slack_app_token=_require("SLACK_APP_TOKEN"),
             aws_region=os.getenv("AWS_REGION", "us-east-1"),
             dynamodb_table=os.getenv("ROXY_DYNAMODB_TABLE", "roxy-channels"),
+            reactors_table=os.getenv("ROXY_REACTORS_TABLE", "roxy-reactors"),
             inactivity_prune_days=int(os.getenv("INACTIVITY_PRUNE_DAYS", "30")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
         )
