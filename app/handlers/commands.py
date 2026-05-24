@@ -36,6 +36,20 @@ def register(app, manager: ChannelManager) -> None:
         )
         say(msg)
 
+    @app.command("/monitor")
+    def monitor_command(ack, command, say):
+        """
+        /monitor
+        Register the current channel for activity tracking.
+        Tracked channels are not pruned — use /spawn for prune-eligible sub-channels.
+        """
+        ack()
+        msg = manager.register_channel(
+            channel_id=command["channel_id"],
+            channel_name=command["channel_name"],
+        )
+        say(msg)
+
     @app.command("/prune")
     def prune_command(ack, command, say):
         """

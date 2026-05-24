@@ -12,6 +12,9 @@ features:
       description: Create a sub-channel under the current channel
       usage_hint: "<channel-name>"
       should_escape: false
+    - command: /monitor
+      description: Register this channel for activity tracking
+      should_escape: false
     - command: /prune
       description: Archive stale sub-channels with no recent activity
       should_escape: false

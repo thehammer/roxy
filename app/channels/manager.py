@@ -79,6 +79,25 @@ class ChannelManager:
         log.info("spawned sub-channel", name=name, parent=parent_channel_name)
         return True, f"Created <#{channel['id']}>."
 
+    def register_channel(self, channel_id: str, channel_name: str) -> str:
+        """Register an existing channel for activity monitoring (not prune-eligible)."""
+        existing = self._registry.get(channel_id)
+        if existing:
+            return f"<#{channel_id}> is already being monitored."
+
+        now = int(time.time())
+        record = ChannelRecord(
+            channel_id=channel_id,
+            channel_name=channel_name,
+            created_at=now,
+            last_activity_at=now,
+            is_sub_channel=False,
+            status="active",
+        )
+        self._registry.upsert(record)
+        log.info("registered channel for monitoring", channel=channel_name)
+        return f"<#{channel_id}> is now being monitored for activity."
+
     def prune_stale_channels(self) -> list[str]:
         """
         Archive sub-channels with no activity for inactivity_days.
