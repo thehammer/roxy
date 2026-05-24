@@ -30,6 +30,7 @@ oauth_config:
       - groups:history
       - groups:read
       - groups:write
+      - users:read
 
 settings:
   event_subscriptions:

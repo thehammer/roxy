@@ -29,7 +29,11 @@ class ReactorEngine:
         if not self._slack_client:
             return None
         username = mention.lstrip("@")
-        response = self._slack_client.users_list()
+        try:
+            response = self._slack_client.users_list()
+        except Exception as e:
+            log.warning("users.list failed — cannot resolve mention", mention=mention, error=str(e))
+            return None
         for member in response.get("members", []):
             if member.get("deleted"):
                 continue
