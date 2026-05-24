@@ -27,7 +27,9 @@ def _start_prune_scheduler(manager: ChannelManager) -> None:
             try:
                 archived = manager.prune_stale_channels()
                 if archived:
-                    log.info("auto-pruned stale sub-channels", count=len(archived), channels=archived)
+                    log.info(
+                        "auto-pruned stale sub-channels", count=len(archived), channels=archived
+                    )
                 else:
                     log.debug("auto-prune ran, no stale channels found")
             except Exception as e:

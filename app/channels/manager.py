@@ -38,7 +38,6 @@ class ChannelManager:
         if not _NAME_RE.match(name):
             return False, f"`{name}` is not a valid Slack channel name (lowercase, hyphens only)."
 
-        existing = self._registry.get(name)  # we key by ID, so check via Slack API
         # Create the channel via Slack API
         try:
             resp = self._client.conversations_create(name=name, is_private=False)
@@ -73,7 +72,10 @@ class ChannelManager:
         # Post a welcome note in the new channel
         self._client.chat_postMessage(
             channel=channel["id"],
-            text=f"👋 Welcome to <#{channel['id']}>! This sub-channel was spawned from <#{parent_channel_id}> by <@{requesting_user_id}>.",
+            text=(
+                f"👋 Welcome to <#{channel['id']}>! This sub-channel was spawned from"
+                f" <#{parent_channel_id}> by <@{requesting_user_id}>."
+            ),
         )
 
         log.info("spawned sub-channel", name=name, parent=parent_channel_name)

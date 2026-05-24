@@ -6,8 +6,8 @@ from typing import Optional
 
 import structlog
 
-from app.reactors.registry import ReactorRegistry
 from app.reactors.models import ReactorRule
+from app.reactors.registry import ReactorRegistry
 
 log = structlog.get_logger()
 
@@ -37,7 +37,8 @@ class ReactorEngine:
         for member in response.get("members", []):
             if member.get("deleted"):
                 continue
-            if member.get("name") == username or member.get("profile", {}).get("display_name") == username:
+            profile_name = member.get("profile", {}).get("display_name")
+            if member.get("name") == username or profile_name == username:
                 return member["id"]
         log.warning("could not resolve slack mention", mention=mention)
         return None
@@ -49,7 +50,11 @@ class ReactorEngine:
             if rule.scope_type == "user" and rule.scope_value and rule.scope_value.startswith("@"):
                 user_id = self._resolve_mention(rule.scope_value)
                 if not user_id:
-                    log.warning("skipping rule — unresolvable mention", rule=rule.name, mention=rule.scope_value)
+                    log.warning(
+                        "skipping rule — unresolvable mention",
+                        rule=rule.name,
+                        mention=rule.scope_value,
+                    )
                     continue
                 rule = dataclasses.replace(rule, scope_value=user_id)
             resolved.append(rule)

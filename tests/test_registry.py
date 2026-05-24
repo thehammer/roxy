@@ -67,7 +67,8 @@ def test_list_sub_channels_filtered_by_parent(registry):
 
 def test_list_stale_sub_channels(registry):
     registry.upsert(make_record(channel_id="C_OLD", channel_name="old", last_activity_at=100))
-    registry.upsert(make_record(channel_id="C_NEW", channel_name="new", last_activity_at=int(time.time())))
+    now = int(time.time())
+    registry.upsert(make_record(channel_id="C_NEW", channel_name="new", last_activity_at=now))
     stale = registry.list_stale_sub_channels(older_than_ts=1000)
     assert len(stale) == 1
     assert stale[0].channel_id == "C_OLD"
