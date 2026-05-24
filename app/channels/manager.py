@@ -21,7 +21,6 @@ class ChannelManager:
         self._registry = registry
         self._client = slack_client
         self._inactivity_days = inactivity_days
-        self._bot_user_id: str = slack_client.auth_test()["user_id"]
 
     def spawn_sub_channel(
         self,
@@ -65,12 +64,11 @@ class ChannelManager:
         )
         self._registry.upsert(record)
 
-        # Invite the requesting user and roxy itself into the new channel
-        users_to_invite = ",".join({requesting_user_id, self._bot_user_id})
+        # Invite the requesting user into the new channel
         try:
-            self._client.conversations_invite(channel=channel["id"], users=users_to_invite)
+            self._client.conversations_invite(channel=channel["id"], users=requesting_user_id)
         except Exception as e:
-            log.warning("Could not invite users to new channel", error=str(e))
+            log.warning("Could not invite user to new channel", error=str(e))
 
         # Post a welcome note in the new channel
         self._client.chat_postMessage(
