@@ -53,7 +53,7 @@ def build_app(config: Config) -> tuple[App, SocketModeHandler]:
         table_name=config.reactors_table,
         region=config.aws_region,
     )
-    engine = ReactorEngine(registry=reactor_registry)
+    engine = ReactorEngine(registry=reactor_registry, slack_client=app.client)
 
     events.register(app, registry, engine)
     commands.register(app, manager)

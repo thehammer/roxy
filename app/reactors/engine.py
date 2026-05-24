@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
 import time
+from typing import Optional
 
 import structlog
 
@@ -13,16 +15,41 @@ _RULE_REFRESH_INTERVAL = 300  # reload rules from DynamoDB every 5 minutes
 
 
 class ReactorEngine:
-    def __init__(self, registry: ReactorRegistry):
+    def __init__(self, registry: ReactorRegistry, slack_client=None):
         self._registry = registry
+        self._slack_client = slack_client
         self._rules: list[ReactorRule] = []
         self._last_refresh: float = 0
         self._cooldowns: dict[str, float] = {}  # "{rule_id}:{channel_id}" -> last fired ts
 
         self._load_rules()
 
+    def _resolve_mention(self, mention: str) -> Optional[str]:
+        """Resolve @username to a Slack user ID. Returns None if not found."""
+        if not self._slack_client:
+            return None
+        username = mention.lstrip("@")
+        response = self._slack_client.users_list()
+        for member in response.get("members", []):
+            if member.get("deleted"):
+                continue
+            if member.get("name") == username or member.get("profile", {}).get("display_name") == username:
+                return member["id"]
+        log.warning("could not resolve slack mention", mention=mention)
+        return None
+
     def _load_rules(self) -> None:
-        self._rules = self._registry.list_enabled()
+        rules = self._registry.list_enabled()
+        resolved: list[ReactorRule] = []
+        for rule in rules:
+            if rule.scope_type == "user" and rule.scope_value and rule.scope_value.startswith("@"):
+                user_id = self._resolve_mention(rule.scope_value)
+                if not user_id:
+                    log.warning("skipping rule — unresolvable mention", rule=rule.name, mention=rule.scope_value)
+                    continue
+                rule = dataclasses.replace(rule, scope_value=user_id)
+            resolved.append(rule)
+        self._rules = resolved
         self._last_refresh = time.time()
         log.info("reactor rules loaded", count=len(self._rules))
 

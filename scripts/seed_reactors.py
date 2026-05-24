@@ -4,12 +4,16 @@ Seed the roxy-reactors DynamoDB table with initial reactor rules.
 
 Covers the behaviour previously handled by inner-drew.
 
+scope_value accepts either a raw Slack user ID (U...) or a @handle — the
+reactor engine resolves @handles to user IDs at rule-load time.
+
 Requires:
-  DREW_USER_ID — Slack user ID to monitor (U...)
-  AWS_REGION   — defaults to us-east-1
+  DREW_USER  — Slack @handle (e.g. drew) or raw user ID (U...)
+  AWS_REGION — defaults to us-east-1
 
 Usage:
-  DREW_USER_ID=U... python scripts/seed_reactors.py
+  DREW_USER=drew python scripts/seed_reactors.py
+  DREW_USER=U02GVC15W python scripts/seed_reactors.py
 """
 
 import os
@@ -23,10 +27,13 @@ load_dotenv()
 
 REGION = os.getenv("AWS_REGION", "us-east-1")
 TABLE = os.getenv("ROXY_REACTORS_TABLE", "roxy-reactors")
-DREW_USER_ID = os.getenv("DREW_USER_ID")
+DREW_USER = os.getenv("DREW_USER") or os.getenv("DREW_USER_ID")
 
-if not DREW_USER_ID:
-    sys.exit("DREW_USER_ID is required")
+if not DREW_USER:
+    sys.exit("DREW_USER is required (e.g. DREW_USER=drew or DREW_USER=U...)")
+
+# Normalize: bare handle becomes @handle; raw IDs pass through unchanged
+drew_scope = DREW_USER if DREW_USER.startswith("U") else f"@{DREW_USER.lstrip('@')}"
 
 table = boto3.resource("dynamodb", region_name=REGION).Table(TABLE)
 now = int(time.time())
@@ -37,7 +44,7 @@ RULES = [
         "name": "Encourage Drew to buy cheap games",
         "enabled": True,
         "scope_type": "user",
-        "scope_value": DREW_USER_ID,
+        "scope_value": drew_scope,
         "keyword_groups": [
             ["game", "buy", "worth", "should i", "on sale",
              "steam", "itch", "gog", "humble", "epic"],
@@ -52,7 +59,7 @@ RULES = [
         "name": "Suggest Drew build a PC when complaining about Mac gaming",
         "enabled": True,
         "scope_type": "user",
-        "scope_value": DREW_USER_ID,
+        "scope_value": drew_scope,
         "keyword_groups": [
             ["mac", "macos", "apple silicon", "m1", "m2", "m3", "m4"],
             ["not supported", "doesn't work", "won't run", "can't play",
@@ -67,6 +74,6 @@ RULES = [
 
 for rule in RULES:
     table.put_item(Item=rule)
-    print(f"✓ Seeded rule: {rule['name']}")
+    print(f"✓ Seeded rule: {rule['name']} (scope: {rule['scope_value']})")
 
 print(f"\nSeeded {len(RULES)} rule(s) into {TABLE}.")
