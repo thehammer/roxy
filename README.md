@@ -1,6 +1,6 @@
 # roxy
 
-A Slack bot for dynamic channel management, built for the [ReadWriteExecute](https://readwriteexecute.com) community. Spawns focused sub-channels on demand, tracks activity, and prunes stale ones automatically.
+A Slack bot for dynamic channel management, built for the ReadWriteExecute Slack community. Spawns focused sub-channels on demand, tracks activity, and prunes stale ones automatically.
 
 ## Features
 
